@@ -1,0 +1,3 @@
+let f x = if * then () else g x
+and g x = f x 
+in f ()
