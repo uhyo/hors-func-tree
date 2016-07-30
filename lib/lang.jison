@@ -53,8 +53,14 @@ atom
 	;
 app
 	: atom		{ $$ = $1 }
-	| app atom	{ $$ = ast.make.application($1, $2) }
+	| atom appargs	{ $$ = ast.make.application($1, $2) }
 	;
+
+appargs
+	: atom		{ $$ = [$1] }
+	| atom appargs	{ $$ = [$1].concat($2) }
+	;
+
 exp
 	: app			{ $$ = $1 }
 	| IF exp THEN exp ELSE exp

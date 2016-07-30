@@ -43,3 +43,8 @@ export function genid(base: string, expect: Array<string>): string{
         }
     }
 }
+
+let glbidx = 1;
+export function glbid(base: string): string{
+    return base + (glbidx++);
+}

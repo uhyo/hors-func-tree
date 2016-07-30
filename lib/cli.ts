@@ -8,6 +8,12 @@ import {
 import {
     cps,
 } from './cps';
+import {
+    beta,
+} from './beta';
+import {
+    lift,
+} from './lift';
 
 const cli = require('cli');
 const util = require('util');
@@ -23,9 +29,15 @@ cli.withStdinLines((lines, newline)=>{
         depth: 5,
     }));
     console.log(printProgram(p));
-    console.log('--------------------');
+    console.log('---------- CPS Transform ----------');
     const p2 = cps(p);
     console.log(printProgram(p2));
+    console.log('---------- Beta Reduction ---------');
+    const p3 = beta(p2);
+    console.log(printProgram(p3));
+    console.log('---------- Lambda Lifting ---------');
+    const p4 = lift(p3);
+    console.log(printProgram(p4));
 });
 
 

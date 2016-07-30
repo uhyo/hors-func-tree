@@ -34,8 +34,11 @@ function printExp(exp: Exp): string{
             return '*';
         case 'variable':
             return exp.name;
-        case 'application':
-            return '(' + printExp(exp.exp1) + ' ' + printExp(exp.exp2) + ')';
+        case 'application': {
+            const f = printExp(exp.exp1);
+            const a = exp.args.map(e => printExp(e)).join(' ');
+            return `(${f} ${a})`;
+        }
         case 'branch': {
             const cond = printExp(exp.cond);
             const exp1 = printExp(exp.exp1);
