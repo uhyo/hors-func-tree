@@ -1,43 +1,78 @@
+import {
+    uniq,
+    arrsub,
+} from './util';
 
 // exp
 export interface Unit{
-    type: "unit";
+    readonly type: "unit";
 }
 export interface BConst{
-    type: "bconst";
-    value: boolean;
+    readonly type: "bconst";
+    readonly value: boolean;
 }
 // undetermined boolean value.
 export interface BUndet{
-    type: "bundet";
+    readonly type: "bundet";
 }
 export interface Variable{
-    type: "variable";
-    name: string;
+    readonly type: "variable";
+    readonly name: string;
 }
 export interface Application{
-    type: "application";
-    exp1: Exp;
-    exp2: Exp;
+    readonly type: "application";
+    readonly exp1: Exp;
+    readonly exp2: Exp;
 }
 export interface Branch{
-    type: "branch";
-    cond: Exp;
-    exp1: Exp;
-    exp2: Exp;
+    readonly type: "branch";
+    readonly cond: Exp;
+    readonly exp1: Exp;
+    readonly exp2: Exp;
 }
 
-export type Exp = Unit | BConst | BUndet | Variable | Application | Branch;
+// Internal
+export interface Lambda{
+    readonly type: "lambda";
+    readonly args: Array<string>;
+    readonly body: Exp;
+}
+
+export type Exp = Unit | BConst | BUndet | Variable | Application | Branch | Lambda;
 
 export interface Program{
-    funcs: {
+    readonly funcs: {
         [name: string]: Func;
     };
-    exp: Exp;
+    readonly exp: Exp;
 }
 export interface Func{
-    args: Array<string>;
-    body: Exp;
+    readonly args: Array<string>;
+    readonly body: Exp;
+}
+
+// free variables.
+export function fv(exp: Exp, all?: boolean): Array<string>{
+    switch(exp.type){
+        case 'unit':
+        case 'bconst':
+        case 'bundet':
+            return [];
+        case 'variable':
+            return [exp.name];
+        case 'application':
+            return uniq([...fv(exp.exp1, all), ...fv(exp.exp2, all)]);
+        case 'branch':
+            return uniq([...fv(exp.cond, all), ...fv(exp.exp1, all), ...fv(exp.exp2, all)]);
+        case 'lambda': {
+            const a = fv(exp.body);
+            if (all){
+                return uniq([...a, ...exp.args]);
+            }else{
+                return arrsub(a, exp.args);
+            }
+        }
+    }
 }
 
 export namespace make{
@@ -76,6 +111,13 @@ export namespace make{
             cond,
             exp1,
             exp2,
+        };
+    }
+    export function lambda(args: Array<string>, body: Exp): Lambda{
+        return {
+            type: "lambda",
+            args,
+            body,
         };
     }
 

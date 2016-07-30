@@ -2,6 +2,12 @@
 import {
     Program,
 } from './ast';
+import {
+    printProgram,
+} from './print';
+import {
+    cps,
+} from './cps';
 
 const cli = require('cli');
 const util = require('util');
@@ -14,8 +20,12 @@ cli.withStdinLines((lines, newline)=>{
 
     const p: Program = parser.parse(str);
     console.log(util.inspect(p, {
-        depth: 4,
+        depth: 5,
     }));
+    console.log(printProgram(p));
+    console.log('--------------------');
+    const p2 = cps(p);
+    console.log(printProgram(p2));
 });
 
 

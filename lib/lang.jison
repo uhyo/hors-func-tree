@@ -25,7 +25,8 @@
 %%
 
 program
-	: LET funcs IN exp EOF { return ast.make.program($2, $4); }
+	: LET funcs IN exp EOF	{ return ast.make.program($2, $4); }
+	| exp EOF		{ return ast.make.program([], $1); }
 	;
 
 funcs
