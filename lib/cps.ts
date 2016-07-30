@@ -66,7 +66,7 @@ function cps_exp(exp: Exp): Exp{
                 const d = cps_exp(aexp);
                 b = make.application(d, [h]);
             }
-            return b;
+            return make.lambda([kn], b);
         }
         case 'branch': {
             const {cond, exp1, exp2} = exp;
