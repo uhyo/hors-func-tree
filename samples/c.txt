@@ -1,0 +1,2 @@
+let f x = if x then false else true in
+f true

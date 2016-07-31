@@ -3,10 +3,6 @@ import {
     Program,
     Exp,
 } from './ast';
-import {
-    Scheme,
-    Rule,
-} from './hors';
 
 export function printProgram(p: Program): string{
     let fl = false;
@@ -16,7 +12,7 @@ export function printProgram(p: Program): string{
         const prf = fl ? 'and' : 'let';
         const args = f.args.join(' ');
         const ln = `${prf} ${name} ${args} =\n`;
-        const e = indent(printExp(f.body), 2);
+        const e = indent(printExp(f.body)[0], 2);
         result += ln + e + '\n';
 
         fl = true;
@@ -24,56 +20,52 @@ export function printProgram(p: Program): string{
     if (result){
         result += 'in ';
     }
-    result += printExp(p.exp);
+    result += printExp(p.exp)[0];
     return result;
 }
 
-function printExp(exp: Exp): string{
+function printExp(exp: Exp): [string, boolean]{
     switch(exp.type){
         case 'unit':
-            return '()';
+            return ['()', true];
         case 'bconst':
-            return String(exp.value);
+            return [String(exp.value), true];
         case 'bundet':
-            return '*';
+            return ['*', true];
         case 'variable':
-            return exp.name;
+            return [exp.name, true];
         case 'application': {
-            const f = printExp(exp.exp1);
-            const a = exp.args.map(e => printExp(e)).join(' ');
-            return `(${f} ${a})`;
+            const f = atom(printExp(exp.exp1));
+            const a = exp.args.map(e => atom(printExp(e))).join(' ');
+            return [`${f} ${a}`, false];
         }
         case 'branch': {
-            const cond = printExp(exp.cond);
-            const exp1 = printExp(exp.exp1);
-            const exp2 = printExp(exp.exp2);
-            return 'if ' + cond + ' then\n' + indent(exp1, 2) + '\nelse\n' + indent(exp2, 2);
+            const cond = atom(printExp(exp.cond));
+            const exp1 = atom(printExp(exp.exp1));
+            const exp2 = atom(printExp(exp.exp2));
+            return ['if ' + cond + ' then\n' + indent(exp1, 2) + '\nelse\n' + indent(exp2, 2), false];
         }
         case 'lambda': {
             const args = exp.args.join(' ');
-            const body = printExp(exp.body);
-            return `(\\${args}. ${body})`;
+            const [body, ] = printExp(exp.body);
+            return [`\\${args}. ${body}`, false];
         }
-
+        // なぜこれが必要なのか？
+        default:
+            throw new Error('a');
     }
 }
 
-export function printScheme({rules}: Scheme): string{
-    let result = '';
-    for(let r of rules){
-        result += printRule(r);
+// handle atom str.
+export function atom([str, at]: [string, boolean]): string{
+    if (at){
+        return str;
+    }else{
+        return `(${str})`;
     }
-    return result;
-}
-function printRule({name, args, body}: Rule): string{
-    const a = args.join(' ');
-    const b = printExp(body);
-    return `${name} ${a} = ${b}\n`;
 }
 
-
-
-function indent(str: string, n: number): string{
+export function indent(str: string, n: number): string{
     const id = ' '.repeat(n);
     return str.split('\n').map(l=> id + l).join('\n');
 }

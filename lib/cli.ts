@@ -4,8 +4,10 @@ import {
 } from './ast';
 import {
     printProgram,
-    printScheme,
 } from './print';
+import {
+    printScheme,
+} from './print-hors';
 import {
     cps,
 } from './cps';
@@ -16,11 +18,13 @@ import {
     lift,
 } from './lift';
 import {
+    optimize,
+} from './optimize';
+import {
     fromProgram,
 } from './hors';
 
 const cli = require('cli');
-const util = require('util');
 const parser = require('./lang').parser;
 
 
@@ -29,9 +33,6 @@ cli.withStdinLines((lines, newline)=>{
     console.log(str);
 
     const p: Program = parser.parse(str);
-    console.log(util.inspect(p, {
-        depth: 5,
-    }));
     console.log(printProgram(p));
     console.log('---------- CPS Transform ----------');
     const p2 = cps(p);
@@ -42,9 +43,12 @@ cli.withStdinLines((lines, newline)=>{
     console.log('---------- Lambda Lifting ---------');
     const p4 = lift(p3);
     console.log(printProgram(p4));
-    console.log('---------- HORS -------- ---------');
-    const p5 = fromProgram(p4);
-    console.log(printScheme(p5));
+    console.log('---------- Optimization -----------');
+    const p5 = optimize(p4);
+    console.log(printProgram(p5));
+    console.log('---------- HORS -------------------');
+    const p6 = fromProgram(p5);
+    console.log(printScheme(p6));
 });
 
 

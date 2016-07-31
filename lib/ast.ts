@@ -40,10 +40,12 @@ export interface Lambda{
 
 export type Exp = Unit | BConst | BUndet | Variable | Application | Branch | Lambda;
 
+export interface FuncDict{
+    [name: string]: Func;
+}
+
 export interface Program{
-    readonly funcs: {
-        [name: string]: Func;
-    };
+    readonly funcs: FuncDict;
     readonly exp: Exp;
 }
 export interface Func{

@@ -2,6 +2,7 @@
 import {
     Program,
     Func,
+    FuncDict,
     Exp,
     fv,
     assign,
@@ -11,10 +12,6 @@ import {
     arrsub,
     glbid,
 } from './util';
-
-interface FuncDict{
-    [name: string]: Func;
-}
 
 export function lift({funcs, exp}: Program): Program{
     // まずfree variablesの収集
