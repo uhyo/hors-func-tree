@@ -29,11 +29,11 @@ export function cps({funcs, exp}: Program): Program{
 }
 function cps_func({args, body}: Func): Func{
     // 継続の名前を決める
-    const k = genid('K', args);
+    const k = glbid('K');
     const kv = make.variable(k);
     return {
-        args,
-        body: cps_exp(body),
+        args: args.concat([k]),
+        body: make.application(cps_exp(body), [kv]),
     };
 }
 function cps_exp(exp: Exp): Exp{
@@ -45,8 +45,8 @@ function cps_exp(exp: Exp): Exp{
         case 'bundet':
             return make.lambda(['K'], make.application(make.variable('K'), [make.bundet()]));
         case 'variable': {
-            const k = genid('K', [exp.name]);
-            return make.lambda([k], make.application(make.variable(k), [make.variable(exp.name)]));
+            const k = glbid('K');
+            return make.lambda([k], make.application(k, [make.variable(exp.name)]));
         }
         case 'application': {
             // call-by-value
@@ -56,7 +56,7 @@ function cps_exp(exp: Exp): Exp{
             const kn = glbid('K');
             const anames = args.map(x => x.type==='variable' ? glbid(x.name) : glbid('V'));
             const fn = glbid(exp1.type==='variable' ? exp1.name : 'F');
-            const contl = make.lambda([fn], make.application(kn, [make.application(fn, anames.map(x => make.variable(x)))]));
+            const contl = make.lambda([fn], make.application(fn, anames.map(x => make.variable(x)).concat([make.variable(kn)])));
             // 全部評価し終わったあとに呼び出すやつ
             let b = make.application(exp1d, [contl]);
             for (let i = args.length-1; i>=0; i--){
