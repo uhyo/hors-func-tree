@@ -46,5 +46,9 @@ export function genid(base: string, expect: Array<string>): string{
 
 let glbidx = 1;
 export function glbid(base: string): string{
-    return base + (glbidx++);
+    if (!/^[\w\.]+$/.test(base)){
+        // 特殊文字は付け替える
+        base = 'V';
+    }
+    return base + '.' + (glbidx++);
 }

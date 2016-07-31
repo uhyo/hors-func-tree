@@ -3,6 +3,8 @@
         "lib": ["es5", "dom", "es2015.core"],
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
         "strictNullChecks": true,
         "module":"commonjs",
         "target":"es5",

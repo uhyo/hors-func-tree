@@ -4,6 +4,7 @@ import {
 } from './ast';
 import {
     printProgram,
+    printScheme,
 } from './print';
 import {
     cps,
@@ -14,6 +15,9 @@ import {
 import {
     lift,
 } from './lift';
+import {
+    fromProgram,
+} from './hors';
 
 const cli = require('cli');
 const util = require('util');
@@ -38,6 +42,9 @@ cli.withStdinLines((lines, newline)=>{
     console.log('---------- Lambda Lifting ---------');
     const p4 = lift(p3);
     console.log(printProgram(p4));
+    console.log('---------- HORS -------- ---------');
+    const p5 = fromProgram(p4);
+    console.log(printScheme(p5));
 });
 
 

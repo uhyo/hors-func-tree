@@ -35,7 +35,7 @@ funcs
 	;
 
 func
-	: IDENT args EQ exp { $$ = { name: $1, func: ast.make.func($2, $4)} }
+	: IDENT args EQ exp { $$ = { name: $1, func: ast.make.func($2, $4, $1)} }
 	;
 
 args

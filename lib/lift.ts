@@ -8,45 +8,38 @@ import {
     make,
 } from './ast';
 import {
-    uniq,
     arrsub,
-    genid,
     glbid,
 } from './util';
 
 interface FuncDict{
     [name: string]: Func;
 }
-// FUncに対して追加の引数を渡す指示
-interface Binding{
-    name: string;
-    args: Array<Exp>;
-}
 
 export function lift({funcs, exp}: Program): Program{
     // まずfree variablesの収集
     // 既存の関数のなまえ
     const glbs = Object.keys(funcs);
-    const dns = glbs.concat(fv(exp, true));
     const fs: FuncDict = {};
     for(let name in funcs){
-        fs[name] = lift_func(funcs[name], fs, glbs, dns);
+        fs[name] = lift_func(funcs[name], fs, glbs);
     }
     return {
         funcs: fs,
-        exp: lift_exp(exp, fs, glbs, dns),
+        exp: lift_exp(exp, fs, glbs),
     };
 }
 
-function lift_func({args, body}: Func, fs: FuncDict, glbs: Array<string>, dns: Array<string>): Func{
-    const body2 = lift_exp(body, fs, glbs, dns);
+function lift_func({args, body, orig_name}: Func, fs: FuncDict, glbs: Array<string>): Func{
+    const body2 = lift_exp(body, fs, glbs);
     return {
         args,
         body: body2,
+        orig_name,
     };
 }
 
-function lift_exp(exp: Exp, fs: FuncDict, glbs: Array<string>, dns: Array<string>): Exp{
+function lift_exp(exp: Exp, fs: FuncDict, glbs: Array<string>): Exp{
     switch(exp.type){
         case 'unit':
         case 'bconst':
@@ -55,17 +48,17 @@ function lift_exp(exp: Exp, fs: FuncDict, glbs: Array<string>, dns: Array<string
             return exp;
         case 'application': {
             const {exp1, args} = exp;
-            const exp1d = lift_exp(exp1, fs, glbs, dns);
-            const argsd = args.map(e => lift_exp(e, fs, glbs, dns));
+            const exp1d = lift_exp(exp1, fs, glbs);
+            const argsd = args.map(e => lift_exp(e, fs, glbs));
             // ふつうだ
             return make.application(exp1d, argsd);
         }
         case 'branch': {
             const {cond, exp1, exp2} = exp;
 
-            const condd = lift_exp(cond, fs, glbs, dns);
-            const exp1d = lift_exp(exp1, fs, glbs, dns);
-            const exp2d = lift_exp(exp2, fs, glbs, dns);
+            const condd = lift_exp(cond, fs, glbs);
+            const exp1d = lift_exp(exp1, fs, glbs);
+            const exp2d = lift_exp(exp2, fs, glbs);
             return make.branch(condd, exp1d, exp2d);
         }
         case 'lambda': {
@@ -74,7 +67,7 @@ function lift_exp(exp: Exp, fs: FuncDict, glbs: Array<string>, dns: Array<string
             const fn = glbid('F');
 
             // funcのbodyは先に変換しておく
-            const body2 = lift_exp(body, fs, glbs, dns);
+            const body2 = lift_exp(body, fs, glbs);
 
             // bodyに登場する自由変数を列挙する
             const fvs = arrsub(fv(body2), glbs.concat(args));
@@ -93,7 +86,6 @@ function lift_exp(exp: Exp, fs: FuncDict, glbs: Array<string>, dns: Array<string
             const f = make.func(args2, body3);
             // 関数を登録
             glbs.push(fn);
-            dns.push(fn);
             fs[fn] = f;
             // 関数に対する部分適用
             if (fvs.length === 0){

@@ -3,6 +3,10 @@ import {
     Program,
     Exp,
 } from './ast';
+import {
+    Scheme,
+    Rule,
+} from './hors';
 
 export function printProgram(p: Program): string{
     let fl = false;
@@ -53,6 +57,22 @@ function printExp(exp: Exp): string{
 
     }
 }
+
+export function printScheme({rules}: Scheme): string{
+    let result = '';
+    for(let r of rules){
+        result += printRule(r);
+    }
+    return result;
+}
+function printRule({name, args, body}: Rule): string{
+    const a = args.join(' ');
+    const b = printExp(body);
+    return `${name} ${a} = ${b}\n`;
+}
+
+
+
 function indent(str: string, n: number): string{
     const id = ' '.repeat(n);
     return str.split('\n').map(l=> id + l).join('\n');

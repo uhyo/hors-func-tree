@@ -10,6 +10,10 @@ import {
     genid,
     glbid,
 } from './util';
+import {
+    endTerminal,
+} from './const';
+
 
 //CPS変換
 
@@ -20,20 +24,21 @@ export function cps({funcs, exp}: Program): Program{
     for(let name in funcs){
         fs[name] = cps_func(funcs[name]);
     }
-    const end = make.variable('END');
+    const end = make.variable(endTerminal);
     const expd = cps_exp(exp);
     return {
         funcs: fs,
         exp: make.application(expd, [end]),
     };
 }
-function cps_func({args, body}: Func): Func{
+function cps_func({args, body, orig_name}: Func): Func{
     // 継続の名前を決める
     const k = glbid('K');
     const kv = make.variable(k);
     return {
         args: args.concat([k]),
         body: make.application(cps_exp(body), [kv]),
+        orig_name,
     };
 }
 function cps_exp(exp: Exp): Exp{

@@ -3,13 +3,9 @@ import {
     Program,
     Func,
     Exp,
-    fv,
     assign,
     make,
 } from './ast';
-import {
-    genid,
-} from './util';
 
 export function beta({funcs, exp}: Program): Program{
     const fs: {
@@ -24,10 +20,11 @@ export function beta({funcs, exp}: Program): Program{
     };
 }
 
-function beta_func({args, body}: Func): Func{
+function beta_func({args, body, orig_name}: Func): Func{
     return {
         args,
         body: beta_exp(body),
+        orig_name,
     };
 }
 
@@ -50,7 +47,6 @@ function beta_exp(exp: Exp): Exp{
                 return make.application(exp1d, argsd);
             }
             const {
-                args: [x, ...xs],
                 body,
             } = exp1d;
             // alpha変換が必要にならないか？

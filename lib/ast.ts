@@ -49,6 +49,8 @@ export interface Program{
 export interface Func{
     readonly args: Array<string>;
     readonly body: Exp;
+    // original name.
+    readonly orig_name: string | undefined;
 }
 
 // free variables.
@@ -104,7 +106,7 @@ export function assign(exp: Exp, asgn: Array<{
         case 'lambda': {
             // 引数になってる奴は立ち入らない
             const {args} = exp; /* ↓なぜかこの中でexpがExpに戻ってる */
-            const asgn2 = asgn.filter(({from ,to})=> args.indexOf(from) < 0);
+            const asgn2 = asgn.filter(({from})=> args.indexOf(from) < 0);
             if (asgn2.length === 0){
                 return exp;
             }else{
@@ -161,10 +163,11 @@ export namespace make{
         };
     }
 
-    export function func(args: Array<string>, body: Exp): Func{
+    export function func(args: Array<string>, body: Exp, orig_name?: string): Func{
         return {
             args,
             body,
+            orig_name,
         };
     }
     export function program(funcs: Array<{
