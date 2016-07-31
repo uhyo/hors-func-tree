@@ -55,7 +55,7 @@ function beta_exp(exp: Exp): Exp{
                 to: args[i],
             }));
             const body2 = assign(body, asgn);
-            return body2;
+            return beta_exp(body2);
         }
         case 'branch': {
             const cond = beta_exp(exp.cond);

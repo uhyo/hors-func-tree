@@ -6,7 +6,6 @@ import {
     fv,
 } from './ast';
 import {
-    uniq,
     genid,
     glbid,
 } from './util';
@@ -79,18 +78,16 @@ function cps_exp(exp: Exp): Exp{
             const exp1d = cps_exp(exp1);
             const exp2d = cps_exp(exp2);
 
-            const fvs = uniq([...fv(condd, true), ...fv(exp1d, true), ...fv(exp2d, true)]);
-            const cn = genid(cond.type==='variable' ? cond.name : 'F', fvs);
-            const e1n = genid(exp1.type==='variable' ? exp1.name : 'F', fvs);
-            const e2n = genid(exp2.type==='variable' ? exp2.name : 'V', fvs);
+            const cn = glbid(cond.type==='variable' ? cond.name : 'F');
 
-            const kn = genid('K', [cn, e1n, e2n, ...fvs]);
+            const kn = glbid('K');
 
-            const cont1 = make.lambda([e1n], make.lambda([kn], make.application(kn, [make.variable(e1n)])));
-            const cont2 = make.lambda([e2n], make.lambda([kn], make.application(kn, [make.variable(e2n)])));
-            const fb = make.branch(make.variable(cn), make.application(exp1d, [cont1]), make.application(exp2d, [cont2]));
-            const cont3 = make.lambda([cn], fb);
-            return make.application(condd, [cont3]);
+            const cont1 = make.application(exp1d, [make.variable(kn)]);
+            const cont2 = make.application(exp2d, [make.variable(kn)]);
+            const ifb = make.branch(make.variable(cn), cont1, cont2);
+            const cont = make.lambda([cn], ifb);
+            const cont3 = make.lambda([kn], make.application(condd, [cont]));
+            return cont3;
         }
         case 'lambda': {
             const {args, body} = exp;

@@ -17,9 +17,9 @@ export function printScheme({rules}: Scheme): string{
     return result;
 }
 function printRule({name, args, body}: Rule): string{
-    const a = args.join(' ');
+    const a = args.join(' ') + (args.length===0 ? '' : ' ');
     const [b, ] = printExp(body);
-    return `${name} ${a} = ${b}\n`;
+    return `${name} ${a}= ${b}\n`;
 }
 function printExp(exp: Exp): [string, boolean]{
     switch(exp.type){

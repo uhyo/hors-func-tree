@@ -21,6 +21,7 @@ import {
     optimize,
 } from './optimize';
 import {
+    Scheme,
     fromProgram,
 } from './hors';
 
@@ -32,23 +33,23 @@ cli.withStdinLines((lines, newline)=>{
     const str = lines.join(newline);
     console.log(str);
 
-    const p: Program = parser.parse(str);
+    let p: Program = parser.parse(str);
     console.log(printProgram(p));
     console.log('---------- CPS Transform ----------');
-    const p2 = cps(p);
-    console.log(printProgram(p2));
+    p = cps(p);
+    console.log(printProgram(p));
     console.log('---------- Beta Reduction ---------');
-    const p3 = beta(p2);
-    console.log(printProgram(p3));
+    p = beta(p);
+    console.log(printProgram(p));
     console.log('---------- Lambda Lifting ---------');
-    const p4 = lift(p3);
-    console.log(printProgram(p4));
+    p = lift(p);
+    console.log(printProgram(p));
     console.log('---------- Optimization -----------');
-    const p5 = optimize(p4);
-    console.log(printProgram(p5));
+    p = optimize(p);
+    console.log(printProgram(p));
     console.log('---------- HORS -------------------');
-    const p6 = fromProgram(p5);
-    console.log(printScheme(p6));
+    let s: Scheme = fromProgram(p);
+    console.log(printScheme(s));
 });
 
 
