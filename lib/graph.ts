@@ -8,7 +8,10 @@ let glb_id = 1;
 export function graph(exp: Exp): string{
     const [, nodes, edges] = graph_exp(exp);
     return `strict graph {
-    graph [rankdir = TB];
+    graph [
+        rankdir = TB,
+        fontsize = 18
+    ];
     node [shape = "none"];
 ${nodes}
 ${edges}
