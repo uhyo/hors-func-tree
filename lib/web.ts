@@ -32,6 +32,7 @@ import {
     printScheme,
 } from './print-hors';
 
+const DEBUG = false;
 
 const parser = require('./lang').parser;
 const viz = require('viz.js');
@@ -45,44 +46,44 @@ document.addEventListener('DOMContentLoaded', ()=>{
         const input = (document.querySelector('#input') as HTMLTextAreaElement).value;
 
         empty(result);
-        let p: Program;
         try {
-            p = parser.parse(input);
+            let p: Program = parser.parse(input);
+
+            box(result, 'Parse Result', `<pre><code>${printProgram(p)}</code></pre>`);
+
+            p = cps(p);
+            box(result, 'CPS Transform', `<pre><code>${printProgram(p)}</code></pre>`);
+
+            p = beta(p);
+            box(result, 'Beta Reduction', `<pre><code>${printProgram(p)}</code></pre>`);
+            p = lift(p);
+            p = optimize(p);
+
+            const s: Scheme = fromProgram(p);
+            if (DEBUG || location.search === '?hors=yes'){
+                box(result, 'Higher Order Recursion Scheme', `<pre><code>${printScheme(s)}</code></pre>`);
+            }else{
+                box(result, 'Higher Order Recursion Scheme', `？？？？？？？？？？（レポートの締め切り前なので）`);
+            }
+
+            const e: SExp = run(s, 8);
+            const dot: string = graph(e);
+
+            //render graph
+            const svg = viz(dot, {
+                engine: 'dot',
+                format: 'svg',
+            });
+            const blob = new Blob([svg], {
+                type: 'image/svg+xml',
+            });
+            const url = URL.createObjectURL(blob);
+
+            box(result, 'Result Tree', `<img src="${url}" class="graph">`);
         }catch(e){
             error.textContent = String(e);
             return;
         }
-        box(result, 'Parse Result', `<pre><code>${printProgram(p)}</code></pre>`);
-
-        p = cps(p);
-        box(result, 'CPS Transform', `<pre><code>${printProgram(p)}</code></pre>`);
-
-        p = beta(p);
-        box(result, 'Beta Reduction', `<pre><code>${printProgram(p)}</code></pre>`);
-        p = lift(p);
-        p = optimize(p);
-
-        const s: Scheme = fromProgram(p);
-        if (location.search === '?hors=yes'){
-            box(result, 'Higher Order Recursion Scheme', `<pre><code>${printScheme(s)}</code></pre>`);
-        }else{
-            box(result, 'Higher Order Recursion Scheme', `？？？？？？？？？？（レポートの締め切り前なので）`);
-        }
-
-        const e: SExp = run(s, 8);
-        const dot: string = graph(e);
-
-        //render graph
-        const svg = viz(dot, {
-            engine: 'dot',
-            format: 'svg',
-        });
-        const blob = new Blob([svg], {
-            type: 'image/svg+xml',
-        });
-        const url = URL.createObjectURL(blob);
-
-        box(result, 'Result Tree', `<img src="${url}" class="graph">`);
     }, false);
 }, false);
 
