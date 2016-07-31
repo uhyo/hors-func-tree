@@ -8,6 +8,7 @@
     "build:jison": "mkdirp dist && jison ./lib/lang.jison -m commonjs -o ./dist/lang.js",
     "build:tsc": "tsc",
     "build:webpack": "webpack",
+    "github-publish": "git subtree push --prefix=dist-web origin gh-pages",
     "watch": "npm-run-all --parallel watch:*",
     "watch:tsc": "tsc --watch",
     "watch:webpack": "webpack-dev-server",

@@ -28,9 +28,11 @@ import {
 import {
     printProgram,
 } from './print';
+/*
 import {
     printScheme,
 } from './print-hors';
+*/
 
 
 const parser = require('./lang').parser;
