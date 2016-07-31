@@ -5,7 +5,6 @@ import {
 } from './hors';
 import {
     atom,
-    indent,
 } from './print';
 
 
@@ -21,7 +20,7 @@ function printRule({name, args, body}: Rule): string{
     const [b, ] = printExp(body);
     return `${name} ${a}= ${b}\n`;
 }
-function printExp(exp: Exp): [string, boolean]{
+export function printExp(exp: Exp): [string, boolean]{
     switch(exp.type){
         case 'unit':
             return ['()', true];
@@ -37,12 +36,6 @@ function printExp(exp: Exp): [string, boolean]{
             const f = atom(printExp(exp.exp1));
             const a = exp.args.map(e => atom(printExp(e))).join(' ');
             return [`${f} ${a}`, false];
-        }
-        case 'branch': {
-            const cond = atom(printExp(exp.cond));
-            const exp1 = atom(printExp(exp.exp1));
-            const exp2 = atom(printExp(exp.exp2));
-            return ['if ' + cond + ' then\n' + indent(exp1, 2) + '\nelse\n' + indent(exp2, 2), false];
         }
     }
 }

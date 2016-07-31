@@ -2,6 +2,7 @@
 import * as ast from './ast';
 import {
     startNonTerminal,
+    endNonTerminal,
     endTerminal,
     branchTerminal,
 } from './const';
@@ -11,8 +12,6 @@ export interface Scheme{
     rules: Array<Rule>;
     // 開始記号
     start: string;
-    // 終端記号の一覧
-    terminal: Array<string>;
 }
 export interface Rule{
     name: string;
@@ -46,13 +45,35 @@ export interface Application{
     readonly exp1: Exp;
     readonly args: Array<Exp>;
 }
-export interface Branch{
-    readonly type: "branch";
-    readonly cond: Exp;
-    readonly exp1: Exp;
-    readonly exp2: Exp;
+export type Exp = Unit | BConst | Terminal | BUndet | Variable | Application;
+
+// assignmentが必要
+export function assign(exp: Exp, asgn: Array<{
+    from: string,
+    to: Exp,
+}>): Exp{
+    switch(exp.type){
+        case 'unit':
+        case 'bconst':
+        case 'bundet':
+        case 'terminal':
+            return exp;
+        case 'variable':
+            for (let {from, to} of asgn){
+                if (from === exp.name){
+                    return to;
+                }
+            }
+            return exp;
+        case 'application': {
+            const {exp1, args} = exp;
+            const exp1d = assign(exp1, asgn);
+            const argsd = args.map(e => assign(e, asgn));
+            return make.application(exp1d, argsd);
+        }
+
+    }
 }
-export type Exp = Unit | BConst | Terminal | BUndet | Variable | Application | Branch;
 
 export namespace make{
     export function unit(): Unit{
@@ -91,28 +112,21 @@ export namespace make{
             args,
         };
     }
-    export function branch(cond: Exp, exp1: Exp, exp2: Exp): Branch{
-        return {
-            type: "branch",
-            cond,
-            exp1,
-            exp2,
-        };
-    }
 }
 
 // Program -> Scheme
 export function fromProgram({funcs, exp}: ast.Program): Scheme{
     const rules: Array<Rule> = [];
-    const terminal: Array<string> = [endTerminal, branchTerminal];
     for(let name in funcs){
         const f = funcs[name];
         rules.push(funcToRule(name, f));
-        // ↓ここのterminalの作り方がアレ
-        if (f.orig_name){
-            terminal.push(f.orig_name);
-        }
     }
+    // 終了は引数を捨てる
+    rules.push({
+        name: endNonTerminal,
+        args: ['x'],
+        body: make.terminal(endTerminal),
+    });
     // 開始記号
     rules.push({
         name: startNonTerminal,
@@ -122,15 +136,19 @@ export function fromProgram({funcs, exp}: ast.Program): Scheme{
     return {
         rules,
         start: startNonTerminal,
-        terminal,
     };
 }
 
-function funcToRule(name: string, {args, body}: ast.Func): Rule{
+function funcToRule(name: string, {args, body, orig_name}: ast.Func): Rule{
+    let b = convExp(body);
+    if (orig_name != void 0){
+        // こいつの呼出は非終端記号を生成
+        b = make.application(make.terminal(orig_name), [b]);
+    }
     return {
         name,
         args,
-        body: convExp(body),
+        body: b,
     };
 }
 
@@ -153,7 +171,7 @@ function convExp(exp: ast.Exp): Exp{
             const exp1d = convExp(exp1);
             const exp2d = convExp(exp2);
             // branchにする
-            return make.application(branchTerminal, [exp1d, exp2d]);
+            return make.application(make.terminal(branchTerminal), [exp1d, exp2d]);
         }
         case 'lambda':
             // lambdaは許容しない

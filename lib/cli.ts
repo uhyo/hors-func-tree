@@ -7,6 +7,7 @@ import {
 } from './print';
 import {
     printScheme,
+    printExp,
 } from './print-hors';
 import {
     cps,
@@ -23,7 +24,14 @@ import {
 import {
     Scheme,
     fromProgram,
+    Exp as SExp,
 } from './hors';
+import {
+    run,
+} from './run';
+import {
+    graph,
+} from './graph';
 
 const cli = require('cli');
 const parser = require('./lang').parser;
@@ -50,6 +58,13 @@ cli.withStdinLines((lines, newline)=>{
     console.log('---------- HORS -------------------');
     let s: Scheme = fromProgram(p);
     console.log(printScheme(s));
+    console.log('---------- Run --------------------');
+    // run hors
+    let e: SExp = run(s, 8);
+    console.log(printExp(e)[0]);
+    console.log('---------- Graph ------------------');
+    let g = graph(e);
+    console.log(g);
 });
 
 

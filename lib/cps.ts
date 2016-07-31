@@ -10,7 +10,7 @@ import {
     glbid,
 } from './util';
 import {
-    endTerminal,
+    endNonTerminal,
 } from './const';
 
 
@@ -23,7 +23,7 @@ export function cps({funcs, exp}: Program): Program{
     for(let name in funcs){
         fs[name] = cps_func(funcs[name]);
     }
-    const end = make.variable(endTerminal);
+    const end = make.variable(endNonTerminal);
     const expd = cps_exp(exp);
     return {
         funcs: fs,
