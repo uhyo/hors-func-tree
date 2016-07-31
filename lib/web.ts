@@ -28,11 +28,9 @@ import {
 import {
     printProgram,
 } from './print';
-/*
 import {
     printScheme,
 } from './print-hors';
-*/
 
 
 const parser = require('./lang').parser;
@@ -65,8 +63,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
         p = optimize(p);
 
         const s: Scheme = fromProgram(p);
-        // box(result, 'Higher Order Recursion Scheme', `<pre><code>${printScheme(s)}</code></pre>`);
-        box(result, 'Higher Order Recursion Scheme', `？？？？？？？？？？（レポートの締め切り前なので）`);
+        if (location.search === '?hors=yes'){
+            box(result, 'Higher Order Recursion Scheme', `<pre><code>${printScheme(s)}</code></pre>`);
+        }else{
+            box(result, 'Higher Order Recursion Scheme', `？？？？？？？？？？（レポートの締め切り前なので）`);
+        }
 
         const e: SExp = run(s, 8);
         const dot: string = graph(e);
