@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
             box(result, 'Parse Result', `<pre><code>${printProgram(p)}</code></pre>`);
             let t: ProgramType = infer(p);
+            console.log(t);
             box(result, 'Type Inference', `<pre><code>${printProgramType(t)}</code></pre>`);
 
             p = cps(p);

@@ -19,6 +19,7 @@ interface RefType{
     readonly type: "ref";
     t: Type | undefined;
     id: number;
+    external: boolean,
 }
 
 export type Type = UnitType | BoolType | FuncType | RefType;
@@ -49,9 +50,13 @@ export function infer({funcs, exp}: Program): ProgramType{
         unify(env[name], t);
     }
     const expt = infer_exp(env, exp);
+    // 余計なrefを消す
+    for(let name in env){
+        env[name] = normalize(env[name]);
+    }
     return {
         funcs: env,
-        exp: expt,
+        exp: normalize(expt),
     };
 }
 
@@ -68,7 +73,7 @@ function infer_exp(env: TypeDict, exp: Exp): Type{
                 return env[exp.name];
             }else{
                 // 外部変数っぽいから環境に入れとく
-                return env[exp.name] = make.ref();
+                return env[exp.name] = make.extref();
             }
         }
         case 'application': {
@@ -83,7 +88,11 @@ function infer_exp(env: TypeDict, exp: Exp): Type{
                 //型を合わせる
                 const a = argst.shift() as Type;    // undefinedがないことを明示
                 unify(ft.from, a);
-                t1 = ft.to;
+                if (isExternal(t1)){
+                    t1 = make.extref(ft.to);
+                }else{
+                    t1 = ft.to;
+                }
             }
             return t1;
         }
@@ -141,6 +150,9 @@ function unify(t1: Type, t2: Type): void{
         }else{
             unify(t1.t, t2);
         }
+        if (t2.type==='ref'){
+            t1.external = t2.external = t1.external || t2.external;
+        }
         return;
     }
     if (t2.type==='ref'){
@@ -152,6 +164,37 @@ function unify(t1: Type, t2: Type): void{
         return;
     }
     throw new Error('TypeError');
+}
+
+// externalかどうか判定する
+export function isExternal(t: Type): boolean{
+    switch(t.type){
+        case 'unit':
+        case 'bool':
+        case 'func':
+            return false;
+        case 'ref':
+            return t.external || (t.t ? isExternal(t.t) : false);
+    }
+}
+
+function normalize(t: Type): Type{
+    switch(t.type){
+        case 'unit':
+        case 'bool':
+            return t;
+        case 'func':
+            return make.func(normalize(t.from), normalize(t.to));
+        case 'ref': {
+            if (t.t == null){
+                return t;
+            }
+            if (t.external === false || isExternal(t.t)){
+                return normalize(t.t);
+            }
+            return make.extref(normalize(t.t));
+        }
+    }
 }
 
 
@@ -211,6 +254,15 @@ namespace make{
             type: 'ref',
             t,
             id: ref_id++,
+            external: false,
+        };
+    }
+    export function extref(t?: Type): RefType{
+        return {
+            type: 'ref',
+            t,
+            id: ref_id++,
+            external: true,
         };
     }
 }
