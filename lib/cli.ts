@@ -37,7 +37,7 @@ const cli = require('cli');
 const parser = require('./lang').parser;
 
 
-cli.withStdinLines((lines, newline)=>{
+cli.withStdinLines((lines: Array<string>, newline: string)=>{
     const str = lines.join(newline);
     console.log(str);
 
