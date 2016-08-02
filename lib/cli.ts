@@ -10,6 +10,10 @@ import {
     printExp,
 } from './print-hors';
 import {
+    infer,
+    printProgramType,
+} from './type';
+import {
     cps,
 } from './cps';
 import {
@@ -41,10 +45,14 @@ cli.withStdinLines((lines: Array<string>, newline: string)=>{
     const str = lines.join(newline);
     console.log(str);
 
+
     let p: Program = parser.parse(str);
     console.log(printProgram(p));
+    console.log('---------- Type Inference ---------');
+    let t = infer(p);
+    console.log(printProgramType(t));
     console.log('---------- CPS Transform ----------');
-    p = cps(p);
+    p = cps(p, t.map);
     console.log(printProgram(p));
     console.log('---------- Beta Reduction ---------');
     p = beta(p);

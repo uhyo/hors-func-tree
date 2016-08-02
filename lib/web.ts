@@ -37,7 +37,7 @@ import {
     printScheme,
 } from './print-hors';
 
-const DEBUG = false;
+const DEBUG = true;
 
 const parser = require('./lang').parser;
 const viz = require('viz.js');
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
                 console.log(t);
                 box(result, 'Type Inference', `<pre><code>${printProgramType(t)}</code></pre>`);
 
-                p = cps(p);
+                p = cps(p, t.map);
                 if (show_dets){
                     box(result, 'CPS Transform', `<pre><code>${printProgram(p)}</code></pre>`);
                 }
