@@ -55,7 +55,7 @@
 	var graph_1 = __webpack_require__(11);
 	var print_1 = __webpack_require__(12);
 	var print_hors_1 = __webpack_require__(13);
-	var DEBUG = true;
+	var DEBUG = false;
 	var parser = __webpack_require__(14).parser;
 	var viz = __webpack_require__(19);
 	document.addEventListener('DOMContentLoaded', function () {
