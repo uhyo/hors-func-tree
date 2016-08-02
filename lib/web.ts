@@ -37,7 +37,7 @@ import {
     printScheme,
 } from './print-hors';
 
-const DEBUG = true;
+const DEBUG = false;
 
 const parser = require('./lang').parser;
 const viz = require('viz.js');
@@ -57,25 +57,31 @@ document.addEventListener('DOMContentLoaded', ()=>{
             try {
                 let p: Program = parser.parse(input);
 
+                let show_dets = DEBUG || location.search === '?hors=yes';
+
                 box(result, 'Parse Result', `<pre><code>${printProgram(p)}</code></pre>`);
                 let t: ProgramType = infer(p);
                 console.log(t);
                 box(result, 'Type Inference', `<pre><code>${printProgramType(t)}</code></pre>`);
 
                 p = cps(p);
-                box(result, 'CPS Transform', `<pre><code>${printProgram(p)}</code></pre>`);
+                if (show_dets){
+                    box(result, 'CPS Transform', `<pre><code>${printProgram(p)}</code></pre>`);
+                }
 
                 p = beta(p);
-                box(result, 'Beta Reduction', `<pre><code>${printProgram(p)}</code></pre>`);
+                if (show_dets){
+                    box(result, 'Beta Reduction', `<pre><code>${printProgram(p)}</code></pre>`);
+                }
                 p = lift(p);
                 p = optimize(p);
-                box(result, 'Lambda Lifting', `<pre><code>${printProgram(p)}</code></pre>`);
+                if (show_dets){
+                    box(result, 'Lambda Lifting', `<pre><code>${printProgram(p)}</code></pre>`);
+                }
 
                 const s: Scheme = fromProgram(p);
-                if (DEBUG || location.search === '?hors=yes'){
+                if (show_dets){
                     box(result, 'Higher Order Recursion Scheme', `<pre><code>${printScheme(s)}</code></pre>`);
-                }else{
-                    box(result, 'Higher Order Recursion Scheme', `？？？？？？？？？？（レポートの締め切り前なので）`);
                 }
 
                 const e: SExp = run(s, 8);

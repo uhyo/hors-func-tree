@@ -16,7 +16,6 @@ export function run({rules, start}: Scheme, depth: number): Exp{
 }
 
 export function runExp(exp: Exp, rules: Array<Rule>, depth: number): Exp{
-    console.log(exp);
     if (depth <= 0){
         //深さを超えたので中断
         return make.terminal(ellipsisTerminal);

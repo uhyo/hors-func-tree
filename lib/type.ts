@@ -144,7 +144,7 @@ function unify(t1: Type, t2: Type): void{
         unify(t1.to, t2.to);
         return;
     }
-    if (t1.type==='ref'){
+    if (t1.type==='ref' && (t2.type!=='ref' || t1.id < t2.id)){
         if (t1.t == null){
             t1.t = t2;
         }else{
