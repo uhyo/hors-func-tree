@@ -55,7 +55,7 @@
 	var graph_1 = __webpack_require__(11);
 	var print_1 = __webpack_require__(12);
 	var print_hors_1 = __webpack_require__(13);
-	var DEBUG = false;
+	var DEBUG = true;
 	var parser = __webpack_require__(14).parser;
 	var viz = __webpack_require__(19);
 	document.addEventListener('DOMContentLoaded', function () {
@@ -74,7 +74,7 @@
 	                var t = type_1.infer(p);
 	                console.log(t);
 	                box(result, 'Type Inference', "<pre><code>" + type_1.printProgramType(t) + "</code></pre>");
-	                p = cps_1.cps(p);
+	                p = cps_1.cps(p, t.map);
 	                if (show_dets) {
 	                    box(result, 'CPS Transform', "<pre><code>" + print_1.printProgram(p) + "</code></pre>");
 	                }
@@ -142,44 +142,57 @@
 	    for (var name_1 in funcs) {
 	        env[name_1] = make.ref();
 	    }
+	    var map = new WeakMap();
 	    for (var name_2 in funcs) {
 	        var _b = funcs[name_2], args = _b.args, body = _b.body;
-	        var t = infer_exp(env, {
+	        var t = infer_exp(env, map, {
 	            type: 'lambda',
 	            args: args,
 	            body: body,
 	        });
 	        unify(env[name_2], t);
 	    }
-	    var expt = infer_exp(env, exp);
+	    var expt = infer_exp(env, map, exp);
 	    for (var name_3 in env) {
 	        env[name_3] = normalize(env[name_3]);
 	    }
 	    return {
 	        funcs: env,
-	        exp: normalize(expt),
+	        exp: expt,
+	        map: map,
 	    };
 	}
 	exports.infer = infer;
-	function infer_exp(env, exp) {
+	function infer_exp(env, map, exp) {
 	    switch (exp.type) {
-	        case 'unit':
-	            return make.unit();
+	        case 'unit': {
+	            var t = make.unit();
+	            map.set(exp, t);
+	            return t;
+	        }
 	        case 'bconst':
-	        case 'bundet':
-	            return make.bool();
+	        case 'bundet': {
+	            var t = make.bool();
+	            map.set(exp, t);
+	            return t;
+	        }
 	        case 'variable': {
 	            if (exp.name in env) {
-	                return env[exp.name];
+	                var t = env[exp.name];
+	                map.set(exp, t);
+	                return t;
 	            }
 	            else {
-	                return env[exp.name] = make.extref();
+	                var t = make.extref();
+	                env[exp.name] = t;
+	                map.set(exp, t);
+	                return t;
 	            }
 	        }
 	        case 'application': {
 	            var exp1 = exp.exp1, args = exp.args;
-	            var t1 = infer_exp(env, exp1);
-	            var argst = args.map(function (e) { return infer_exp(env, e); });
+	            var t1 = infer_exp(env, map, exp1);
+	            var argst = args.map(function (e) { return infer_exp(env, map, e); });
 	            while (argst.length > 0) {
 	                var ft = make.func(make.ref(), make.ref());
 	                unify(t1, ft);
@@ -192,15 +205,17 @@
 	                    t1 = ft.to;
 	                }
 	            }
+	            map.set(exp, t1);
 	            return t1;
 	        }
 	        case 'branch': {
 	            var cond = exp.cond, exp1 = exp.exp1, exp2 = exp.exp2;
-	            var condt = infer_exp(env, cond);
+	            var condt = infer_exp(env, map, cond);
 	            unify(condt, make.bool());
-	            var exp1t = infer_exp(env, exp1);
-	            var exp2t = infer_exp(env, exp2);
+	            var exp1t = infer_exp(env, map, exp1);
+	            var exp2t = infer_exp(env, map, exp2);
 	            unify(exp1t, exp2t);
+	            map.set(exp, exp1t);
 	            return exp1t;
 	        }
 	        case 'lambda': {
@@ -213,12 +228,13 @@
 	                var a = args_1[_i];
 	                env2[a] = make.ref();
 	            }
-	            var t = infer_exp(env2, body);
+	            var t = infer_exp(env2, map, body);
 	            var reva = args.concat([]).reverse();
 	            for (var _a = 0, reva_1 = reva; _a < reva_1.length; _a++) {
 	                var a = reva_1[_a];
 	                t = make.func(env2[a], t);
 	            }
+	            map.set(exp, t);
 	            return t;
 	        }
 	    }
@@ -370,33 +386,34 @@
 
 	"use strict";
 	var ast_1 = __webpack_require__(3);
+	var type_1 = __webpack_require__(1);
 	var util_1 = __webpack_require__(4);
 	var const_1 = __webpack_require__(5);
-	function cps(_a) {
+	function cps(_a, map) {
 	    var funcs = _a.funcs, exp = _a.exp;
 	    var fs = {};
 	    for (var name_1 in funcs) {
-	        fs[name_1] = cps_func(funcs[name_1]);
+	        fs[name_1] = cps_func(funcs[name_1], map);
 	    }
 	    var end = ast_1.make.variable(const_1.endNonTerminal);
-	    var expd = cps_exp(exp);
+	    var expd = cps_exp(exp, map);
 	    return {
 	        funcs: fs,
 	        exp: ast_1.make.application(expd, [end]),
 	    };
 	}
 	exports.cps = cps;
-	function cps_func(_a) {
+	function cps_func(_a, map) {
 	    var args = _a.args, body = _a.body, orig_name = _a.orig_name;
 	    var k = util_1.glbid('K');
 	    var kv = ast_1.make.variable(k);
 	    return {
 	        args: args.concat([k]),
-	        body: ast_1.make.application(cps_exp(body), [kv]),
+	        body: ast_1.make.application(cps_exp(body, map), [kv]),
 	        orig_name: orig_name,
 	    };
 	}
-	function cps_exp(exp) {
+	function cps_exp(exp, map) {
 	    switch (exp.type) {
 	        case 'unit':
 	            return ast_1.make.lambda(['K'], ast_1.make.application(ast_1.make.variable('K'), [ast_1.make.unit()]));
@@ -410,26 +427,30 @@
 	        }
 	        case 'application': {
 	            var exp1 = exp.exp1, args = exp.args;
-	            var exp1d = cps_exp(exp1);
+	            var exp1d = cps_exp(exp1, map);
 	            var kn = util_1.glbid('K');
 	            var anames = args.map(function (x) { return x.type === 'variable' ? util_1.glbid(x.name) : util_1.glbid('V'); });
 	            var fn = util_1.glbid(exp1.type === 'variable' ? exp1.name : 'F');
-	            var contl = ast_1.make.lambda([fn], ast_1.make.application(fn, anames.map(function (x) { return ast_1.make.variable(x); }).concat([ast_1.make.variable(kn)])));
+	            var exp1t = map.get(exp1);
+	            var ext = exp1t ? type_1.isExternal(exp1t) : false;
+	            var contl = ext ?
+	                ast_1.make.lambda([fn], ast_1.make.application(kn, [ast_1.make.application(fn, anames.map(function (x) { return ast_1.make.variable(x); }))])) :
+	                ast_1.make.lambda([fn], ast_1.make.application(fn, anames.map(function (x) { return ast_1.make.variable(x); }).concat([ast_1.make.variable(kn)])));
 	            var b = ast_1.make.application(exp1d, [contl]);
 	            for (var i = args.length - 1; i >= 0; i--) {
 	                var aexp = args[i];
 	                var a = anames[i];
 	                var h = ast_1.make.lambda([a], b);
-	                var d = cps_exp(aexp);
+	                var d = cps_exp(aexp, map);
 	                b = ast_1.make.application(d, [h]);
 	            }
 	            return ast_1.make.lambda([kn], b);
 	        }
 	        case 'branch': {
 	            var cond = exp.cond, exp1 = exp.exp1, exp2 = exp.exp2;
-	            var condd = cps_exp(cond);
-	            var exp1d = cps_exp(exp1);
-	            var exp2d = cps_exp(exp2);
+	            var condd = cps_exp(cond, map);
+	            var exp1d = cps_exp(exp1, map);
+	            var exp2d = cps_exp(exp2, map);
 	            var cn = util_1.glbid(cond.type === 'variable' ? cond.name : 'F');
 	            var kn = util_1.glbid('K');
 	            var cont1 = ast_1.make.application(exp1d, [ast_1.make.variable(kn)]);
@@ -441,7 +462,7 @@
 	        }
 	        case 'lambda': {
 	            var args = exp.args, body = exp.body;
-	            var expd = cps_exp(body);
+	            var expd = cps_exp(body, map);
 	            var fvs = ast_1.fv(exp, true);
 	            var k = util_1.genid('K', fvs);
 	            return ast_1.make.lambda([k], ast_1.make.lambda(args, expd));
