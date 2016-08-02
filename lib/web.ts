@@ -3,6 +3,11 @@ import {
     Program,
 } from './ast';
 import {
+    ProgramType,
+    infer,
+    printProgramType,
+} from './type';
+import {
     cps,
 } from './cps';
 import {
@@ -50,6 +55,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
             let p: Program = parser.parse(input);
 
             box(result, 'Parse Result', `<pre><code>${printProgram(p)}</code></pre>`);
+            let t: ProgramType = infer(p);
+            box(result, 'Type Inference', `<pre><code>${printProgramType(t)}</code></pre>`);
 
             p = cps(p);
             box(result, 'CPS Transform', `<pre><code>${printProgram(p)}</code></pre>`);
