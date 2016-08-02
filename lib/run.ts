@@ -16,6 +16,7 @@ export function run({rules, start}: Scheme, depth: number): Exp{
 }
 
 export function runExp(exp: Exp, rules: Array<Rule>, depth: number): Exp{
+    console.log(exp);
     if (depth <= 0){
         //深さを超えたので中断
         return make.terminal(ellipsisTerminal);
@@ -24,8 +25,8 @@ export function runExp(exp: Exp, rules: Array<Rule>, depth: number): Exp{
         case 'unit':
         case 'bconst':
         case 'bundet':
-            // お前らが来るのはちょっとおかしいぞ？
-            throw new Error('Invalid Expression');
+            // お前らが来るのはちょっとおかしいのでは？
+            return exp;
         case 'terminal':
             // お前はそのままでいいぞ
             return exp;
@@ -39,11 +40,16 @@ export function runExp(exp: Exp, rules: Array<Rule>, depth: number): Exp{
             return exp;
         case 'application': {
             const {exp1, args} = exp;
+            if (exp1.type === 'application'){
+                // (f x) y の形になっているぞ
+                const napp = make.application(exp1.exp1, exp1.args.concat(args));
+                return runExp(napp, rules, depth);
+            }
             const exp1d = runExp(exp1, rules, depth);
             if (exp1d.type === 'terminal'){
                 // 終端記号だから中に入る
                 const argsd = args.map(e => runExp(e, rules, depth-1));
-                return make.application(exp1, argsd);
+                return make.application(exp1d, argsd);
             }else if(exp1d.type === 'variable'){
                 // variabeをapplyする
                 for (let {name, args: args2, body} of rules){
