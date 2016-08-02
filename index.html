@@ -17,7 +17,8 @@
       }
       #error {
         color: red;
-        font-style: monospace;
+        font-family: monospace;
+        white-space: pre;
       }
 
 
@@ -36,6 +37,9 @@
       #run-button {
         width: 100%;
         font-size: 2em;
+      }
+      .sample-button {
+        font-size: 1.4em;
       }
 
       section.box {
@@ -64,6 +68,13 @@ and g x = f x
 in f ()
         </textarea>
         <p><input type="button" value="Run" id="run-button"></p>
+        <hr>
+        <p><input type="button" value="Sample input 1" class="sample-button" data-code="let f x = if * then () else g x
+and g x = f x 
+in f ()"></p>
+        <p><input type="button" value="Sample input 2" class="sample-button" data-code="let f g x = if * then g (g x) else if * then g x else x
+and g x = ()
+in  f g ()"></p>
         <div id="error"></div>
       </section>
       <section class="output-section">
