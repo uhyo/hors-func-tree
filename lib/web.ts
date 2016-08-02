@@ -37,7 +37,7 @@ import {
     printScheme,
 } from './print-hors';
 
-const DEBUG = true;
+const DEBUG = false;
 
 const parser = require('./lang').parser;
 const viz = require('viz.js');
