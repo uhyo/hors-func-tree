@@ -37,7 +37,7 @@ import {
     printScheme,
 } from './print-hors';
 
-const DEBUG = false;
+const DEBUG = true;
 
 const parser = require('./lang').parser;
 const viz = require('viz.js');
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
                 box(result, 'Result Tree', `<img src="${url}" class="graph">`);
             }catch(e){
-                error.textContent = String(e && e.message);
+                showError(result, String(e && (e.message + (DEBUG && e.stack ? '\n'+e.stack: ''))));
                 return;
             }
         }, 0);
@@ -124,6 +124,14 @@ function box(result: HTMLElement, title: string, content: string): void{
     const html = `<section class="box">
     <h3>${title}</h3>
 ${content}
+</section>
+`;
+    result.insertAdjacentHTML('beforeend', html);
+}
+function showError(result: HTMLElement, content: string): void{
+    const html = `<section class="box error-box">
+    <h3>Error</h3>
+<pre>${content}</pre>
 </section>
 `;
     result.insertAdjacentHTML('beforeend', html);

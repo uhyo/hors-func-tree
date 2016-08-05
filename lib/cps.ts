@@ -15,6 +15,8 @@ import {
 } from './util';
 import {
     endNonTerminal,
+    trueNonTerminal,
+    falseNonTerminal,
 } from './const';
 
 
@@ -24,11 +26,25 @@ export function cps({funcs, exp}: Program, map: WeakMap<Exp, Type>): Program{
     const fs: {
         [name: string]: Func;
     } = {};
+    const fvs: Array<string> = []
     for(let name in funcs){
         fs[name] = cps_func(funcs[name], map);
+        fvs.push(...fv(fs[name].body));
     }
     const end = make.variable(endNonTerminal);
     const expd = cps_exp(exp, map);
+    fvs.push(...fv(expd));
+
+    // true, false関数の定義
+    if(fvs.indexOf(trueNonTerminal)>=0){
+        fs[trueNonTerminal] = make.func(['t', 'f', 'k'], 
+                                        make.application('t', [make.variable('k')]));
+    }
+    if(fvs.indexOf(falseNonTerminal)>=0){
+        fs[falseNonTerminal] = make.func(['t', 'f', 'k'], 
+                                        make.application('f', [make.variable('k')]));
+    }
+
     return {
         funcs: fs,
         exp: make.application(expd, [end]),
@@ -47,11 +63,12 @@ function cps_func({args, body, orig_name}: Func, map: WeakMap<Exp, Type>): Func{
 function cps_exp(exp: Exp, map: WeakMap<Exp, Type>): Exp{
     switch(exp.type){
         case 'unit':
-            return make.lambda(['K'], make.application(make.variable('K'), [make.unit()]));
+            return make.lambda(['K'], make.application('K', [make.unit()]));
         case 'bconst':
-            return make.lambda(['K'], make.application(make.variable('K'), [make.bconst(exp.value)]));
+            // 真偽値は関数に変換
+            return make.lambda(['K'], make.application('K', [make.variable(exp.value ? trueNonTerminal : falseNonTerminal)]));
         case 'bundet':
-            return make.lambda(['K'], make.application(make.variable('K'), [make.bundet()]));
+            return make.lambda(['K'], make.application('K', [make.bundet()]));
         case 'variable': {
             const k = glbid('K');
             return make.lambda([k], make.application(k, [make.variable(exp.name)]));
@@ -92,10 +109,11 @@ function cps_exp(exp: Exp, map: WeakMap<Exp, Type>): Exp{
             const cn = glbid(cond.type==='variable' ? cond.name : 'F');
 
             const kn = glbid('K');
+            const kn2 = glbid('K');
 
-            const cont1 = make.application(exp1d, [make.variable(kn)]);
-            const cont2 = make.application(exp2d, [make.variable(kn)]);
-            const ifb = make.branch(make.variable(cn), cont1, cont2);
+            const cont1 = make.lambda([kn2], make.application(exp1d, [make.variable(kn2)]));
+            const cont2 = make.lambda([kn2], make.application(exp2d, [make.variable(kn2)]));
+            const ifb = make.application(cn, [cont1, cont2, make.variable(kn)]);
             const cont = make.lambda([cn], ifb);
             const cont3 = make.lambda([kn], make.application(condd, [cont]));
             return cont3;

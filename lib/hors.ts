@@ -4,6 +4,7 @@ import {
     startNonTerminal,
     endNonTerminal,
     endTerminal,
+    branchNonTerminal,
     branchTerminal,
 } from './const';
 
@@ -121,6 +122,14 @@ export function fromProgram({funcs, exp}: ast.Program): Scheme{
         const f = funcs[name];
         rules.push(funcToRule(name, f));
     }
+    // branching
+    rules.push({
+        name: branchTerminal,
+        args: ['t', 'f', 'k'],
+        body: make.application(make.terminal(branchTerminal),
+                               [make.application('t', [make.variable('k')]),
+                                make.application('f', [make.variable('k')])]),
+    });
     // 終了は引数を捨てる
     rules.push({
         name: endNonTerminal,
@@ -157,9 +166,10 @@ function convExp(exp: ast.Exp): Exp{
     switch(exp.type){
         case 'unit':
         case 'bconst':
-        case 'bundet':
         case 'variable':
             return exp;
+        case 'bundet':
+            return make.variable(branchNonTerminal);
         case 'application': {
             const {exp1, args} = exp;
             const exp1d = convExp(exp1);
