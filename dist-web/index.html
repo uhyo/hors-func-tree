@@ -47,6 +47,9 @@
         padding: 8px;
         background-color: #eeeeee;
       }
+      section.box.error-box {
+        background-color: #ffc0c0;
+      }
       section.box h3 {
         margin: -8px 0 0 -8px;
         padding: 3px;
@@ -55,6 +58,9 @@
         font-size: 1.1em;
         font-weight: 400;
         color: #444444;
+      }
+      section.box.error-box h3 {
+        background-color: #ff9999;
       }
     </style>
   </head>
@@ -75,6 +81,8 @@ in f ()"></p>
         <p><input type="button" value="Sample input 2" class="sample-button" data-code="let f g x = if * then g (g x) else if * then g x else x
 and g x = ()
 in  f g ()"></p>
+        <p><input type="button" value="Sample input 3" class="sample-button" data-code="let id x = x
+in if id true then true else id false"></p>
         <div id="error"></div>
       </section>
       <section class="output-section">

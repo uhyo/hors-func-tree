@@ -55,7 +55,7 @@
 	var graph_1 = __webpack_require__(11);
 	var print_1 = __webpack_require__(12);
 	var print_hors_1 = __webpack_require__(13);
-	var DEBUG = false;
+	var DEBUG = true;
 	var parser = __webpack_require__(14).parser;
 	var viz = __webpack_require__(19);
 	document.addEventListener('DOMContentLoaded', function () {
@@ -104,7 +104,7 @@
 	                box(result, 'Result Tree', "<img src=\"" + url + "\" class=\"graph\">");
 	            }
 	            catch (e) {
-	                error.textContent = String(e && e.message);
+	                showError(result, String(e && (e.message + (DEBUG && e.stack ? '\n' + e.stack : ''))));
 	                return;
 	            }
 	        }, 0);
@@ -127,6 +127,10 @@
 	}
 	function box(result, title, content) {
 	    var html = "<section class=\"box\">\n    <h3>" + title + "</h3>\n" + content + "\n</section>\n";
+	    result.insertAdjacentHTML('beforeend', html);
+	}
+	function showError(result, content) {
+	    var html = "<section class=\"box error-box\">\n    <h3>Error</h3>\n<pre>" + content + "</pre>\n</section>\n";
 	    result.insertAdjacentHTML('beforeend', html);
 	}
 
@@ -392,11 +396,20 @@
 	function cps(_a, map) {
 	    var funcs = _a.funcs, exp = _a.exp;
 	    var fs = {};
+	    var fvs = [];
 	    for (var name_1 in funcs) {
 	        fs[name_1] = cps_func(funcs[name_1], map);
+	        fvs.push.apply(fvs, ast_1.fv(fs[name_1].body));
 	    }
 	    var end = ast_1.make.variable(const_1.endNonTerminal);
 	    var expd = cps_exp(exp, map);
+	    fvs.push.apply(fvs, ast_1.fv(expd));
+	    if (fvs.indexOf(const_1.trueNonTerminal) >= 0) {
+	        fs[const_1.trueNonTerminal] = ast_1.make.func(['t', 'f', 'k'], ast_1.make.application('t', [ast_1.make.variable('k')]));
+	    }
+	    if (fvs.indexOf(const_1.falseNonTerminal) >= 0) {
+	        fs[const_1.falseNonTerminal] = ast_1.make.func(['t', 'f', 'k'], ast_1.make.application('f', [ast_1.make.variable('k')]));
+	    }
 	    return {
 	        funcs: fs,
 	        exp: ast_1.make.application(expd, [end]),
@@ -416,11 +429,11 @@
 	function cps_exp(exp, map) {
 	    switch (exp.type) {
 	        case 'unit':
-	            return ast_1.make.lambda(['K'], ast_1.make.application(ast_1.make.variable('K'), [ast_1.make.unit()]));
+	            return ast_1.make.lambda(['K'], ast_1.make.application('K', [ast_1.make.unit()]));
 	        case 'bconst':
-	            return ast_1.make.lambda(['K'], ast_1.make.application(ast_1.make.variable('K'), [ast_1.make.bconst(exp.value)]));
+	            return ast_1.make.lambda(['K'], ast_1.make.application('K', [ast_1.make.variable(exp.value ? const_1.trueNonTerminal : const_1.falseNonTerminal)]));
 	        case 'bundet':
-	            return ast_1.make.lambda(['K'], ast_1.make.application(ast_1.make.variable('K'), [ast_1.make.bundet()]));
+	            return ast_1.make.lambda(['K'], ast_1.make.application('K', [ast_1.make.bundet()]));
 	        case 'variable': {
 	            var k = util_1.glbid('K');
 	            return ast_1.make.lambda([k], ast_1.make.application(k, [ast_1.make.variable(exp.name)]));
@@ -453,9 +466,10 @@
 	            var exp2d = cps_exp(exp2, map);
 	            var cn = util_1.glbid(cond.type === 'variable' ? cond.name : 'F');
 	            var kn = util_1.glbid('K');
-	            var cont1 = ast_1.make.application(exp1d, [ast_1.make.variable(kn)]);
-	            var cont2 = ast_1.make.application(exp2d, [ast_1.make.variable(kn)]);
-	            var ifb = ast_1.make.branch(ast_1.make.variable(cn), cont1, cont2);
+	            var kn2 = util_1.glbid('K');
+	            var cont1 = ast_1.make.lambda([kn2], ast_1.make.application(exp1d, [ast_1.make.variable(kn2)]));
+	            var cont2 = ast_1.make.lambda([kn2], ast_1.make.application(exp2d, [ast_1.make.variable(kn2)]));
+	            var ifb = ast_1.make.application(cn, [cont1, cont2, ast_1.make.variable(kn)]);
 	            var cont = ast_1.make.lambda([cn], ifb);
 	            var cont3 = ast_1.make.lambda([kn], ast_1.make.application(condd, [cont]));
 	            return cont3;
@@ -682,8 +696,11 @@
 	exports.startNonTerminal = '$Start$';
 	exports.endNonTerminal = '$End$';
 	exports.endTerminal = '$End$';
+	exports.branchNonTerminal = '$br$';
 	exports.branchTerminal = '$br$';
 	exports.ellipsisTerminal = '…';
+	exports.trueNonTerminal = '$True$';
+	exports.falseNonTerminal = '$False$';
 
 
 /***/ },
@@ -1000,6 +1017,12 @@
 	        rules.push(funcToRule(name_1, f));
 	    }
 	    rules.push({
+	        name: const_1.branchTerminal,
+	        args: ['t', 'f', 'k'],
+	        body: make.application(make.terminal(const_1.branchTerminal), [make.application('t', [make.variable('k')]),
+	            make.application('f', [make.variable('k')])]),
+	    });
+	    rules.push({
 	        name: const_1.endNonTerminal,
 	        args: ['x'],
 	        body: make.terminal(const_1.endTerminal),
@@ -1031,9 +1054,10 @@
 	    switch (exp.type) {
 	        case 'unit':
 	        case 'bconst':
-	        case 'bundet':
 	        case 'variable':
 	            return exp;
+	        case 'bundet':
+	            return make.variable(const_1.branchNonTerminal);
 	        case 'application': {
 	            var exp1 = exp.exp1, args = exp.args;
 	            var exp1d = convExp(exp1);
@@ -1065,6 +1089,7 @@
 	}
 	exports.run = run;
 	function runExp(exp, rules, depth) {
+	    console.log(exp);
 	    if (depth <= 0) {
 	        return hors_1.make.terminal(const_1.ellipsisTerminal);
 	    }
