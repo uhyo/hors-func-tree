@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     const result = document.querySelector('#result') as HTMLDivElement;
     const inputarea = document.querySelector('#input') as HTMLTextAreaElement;
 
-    document.querySelector('#run-button').addEventListener('click', ()=>{
+    document.querySelector('#run-button')!.addEventListener('click', ()=>{
         const input = inputarea.value;
 
         empty(result);

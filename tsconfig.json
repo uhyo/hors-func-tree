@@ -1,6 +1,6 @@
 {
     "compilerOptions":{
-        "lib": ["es5", "dom", "es2015.core","es2015.collection"],
+        "lib": ["es5", "dom", "es2015", "es2016.array.include"],
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,

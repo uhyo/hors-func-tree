@@ -6,6 +6,7 @@ import {
     endTerminal,
     branchNonTerminal,
     branchTerminal,
+    unitTerminal,
 } from './const';
 
 export interface Scheme{
@@ -164,10 +165,11 @@ function funcToRule(name: string, {args, body, orig_name}: ast.Func): Rule{
 // expの変換
 function convExp(exp: ast.Exp): Exp{
     switch(exp.type){
-        case 'unit':
         case 'bconst':
         case 'variable':
             return exp;
+        case 'unit':
+            return make.terminal(unitTerminal);
         case 'bundet':
             return make.variable(branchNonTerminal);
         case 'application': {

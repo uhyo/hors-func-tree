@@ -50,5 +50,5 @@ export function glbid(base: string): string{
         // 特殊文字は付け替える
         base = 'V';
     }
-    return base + '.' + (glbidx++);
+    return base + '_' + (glbidx++);
 }
